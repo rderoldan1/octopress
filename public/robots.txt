@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+
+Sitemap: http://respinos.com/sitemap.xml 

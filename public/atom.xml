@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[My Blog]]></title>
+  <link href="http://respinos.com/atom.xml" rel="self"/>
+  <link href="http://respinos.com/"/>
+  <updated>2013-09-26T00:23:31-05:00</updated>
+  <id>http://respinos.com/</id>
+  <author>
+    <name><![CDATA[Ruben Espinosa]]></name>
+    <email><![CDATA[rderoldan1@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[First Blog page]]></title>
+    <link href="http://respinos.com/blog/2013/09/25/first-blog-page/"/>
+    <updated>2013-09-25T14:43:00-05:00</updated>
+    <id>http://respinos.com/blog/2013/09/25/first-blog-page</id>
+    <content type="html"><![CDATA[<p>This is my first octopress blog, so I&rsquo;m trying to create some code, this post would be
+a little crazy because I&rsquo;m learning the Jekyll sintax</p>
+
+<p>I had help a woman in linkedin who have a problem using <code>wicked_pdf</code></p>
+
+<p> <div><script src='https://gist.github.com/6684698.js?file=controller.rb'></script>
+<noscript><pre><code>#action show
+def show
+  @object = Model.firts
+  respond_to do |format|</p>
+
+<pre><code>format.html
+format.pdf {render :pdf =&amp;gt; &amp;quot;pdf_name}
+</code></pre>
+
+<p>  end
+end</code></pre></noscript></div></p>
+
+<!-- more -->
+
+]]></content>
+  </entry>
+  
+</feed>
