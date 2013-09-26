@@ -22,9 +22,9 @@ module Jekyll
 
     def render(context)
       if parts = @text.match(/([a-zA-Z\d]*) (.*)/)
-        gist, file = parts[1].strip, parts[2].strip
+        gist, file, user = parts[1].strip, parts[2].strip, "rderoldan1"
         script_url = script_url_for gist, file
-        code       = get_cached_gist(gist, file) || get_gist_from_web(gist, file)
+        code       = get_cached_gist(gist, file) || get_gist_from_web(gist, file, user)
         html_output_for script_url, code
       else
         ""
@@ -45,8 +45,8 @@ module Jekyll
       url
     end
 
-    def get_gist_url_for(gist, file)
-      "https://raw.github.com/gist/#{gist}/#{file}"
+    def get_gist_url_for(gist, file, user)
+      "https://gist.github.com/#{user}/#{gist}/raw/#{file}"
     end
 
     def cache(gist, file, data)
@@ -70,8 +70,8 @@ module Jekyll
       File.join @cache_folder, "#{gist}-#{file}-#{md5}.cache"
     end
 
-    def get_gist_from_web(gist, file)
-      gist_url          = get_gist_url_for gist, file
+    def get_gist_from_web(gist, file, user)
+      gist_url          = get_gist_url_for gist, file, user
       raw_uri           = URI.parse gist_url
       proxy             = ENV['http_proxy']
       if proxy
