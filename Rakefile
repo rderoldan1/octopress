@@ -398,3 +398,14 @@ task :list do
   puts "Tasks: #{(Rake::Task.tasks - [Rake::Task[:list]]).join(', ')}"
   puts "(type rake -T for more detail)\n\n"
 end
+
+# usage rake deploy_heroku
+desc "Commits all source changes and pushes to master and heroku"
+task :deploy_heroku do
+  Rake::Task[:generate].execute
+  system "git add ."
+  message = "Updated Never Stop Building at #{Time.now.utc}"
+  system "git commit -am '#{message}'"
+  system "git push origin master"
+  system "git push heroku master"
+end
