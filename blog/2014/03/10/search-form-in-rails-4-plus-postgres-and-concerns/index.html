@@ -1,0 +1,313 @@
+
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Search form in Rails 4 + Postgres and Concerns - My Blog</title>
+	<meta name="author" content="Ruben Espinosa">
+
+	
+	<meta name="description" content="Search Form in Rails 4 + Postgres and Concerns Assumptions This post assume that you are using 2 main gems in your Rails Application 1
+2
+3
+4
+# &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/github/atom.xml" rel="alternate" title="My Blog" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://rderoldan1.github.io//github/blog/2014/03/10/search-form-in-rails-4-plus-postgres-and-concerns/">
+	<link href="/github/favicon.png" rel="shortcut icon">
+	<link href="/github/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<link href="/github/stylesheets/font-awesome.min.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-32806011-2']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">
+	
+	<script src="/github/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('.profilepic').append("<img src='http://www.gravatar.com/avatar/" + MD5("rderoldan1@gmail.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+		});
+	</script>
+	
+</div>
+<hgroup>
+  <h1><a href="/github/">My Blog</a></h1>
+  
+</hgroup>
+
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/github/">Blog</a></li>
+  <li><a href="/github/blog/archives">Archives</a></li>
+    <li><a href="/github/about">About</a></li>
+</ul>
+
+
+<section class="aboutme">
+  <p>
+    My personal blog, I'll post personal memories related with tech and computer science
+  </p>
+</section>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		<a class="google" href="https://plus.google.com/109427199248613940454" rel="author" title="Google+">Google+</a>
+		
+		
+		<a class="twitter" href="http://twitter.com/rderoldan1" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/rderoldan1" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/github/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Search Form in Rails 4 + Postgres and Concerns</h1>
+	<div class="entry-content" itemprop="articleBody"><h3>Assumptions</h3>
+
+<p>This post assume that you are using 2 main gems in your Rails Application</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Gemfile</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">gem</span> <span class="s1">&#39;bootstrap-sass&#39;</span> <span class="c1"># bootstrap 3</span>
+</span><span class='line'><span class="n">gem</span> <span class="s1">&#39;will_paginate&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One of the most interesting features included in Rails 4 is Model and Controller concerns. As
+<a href="https://twitter.com/dhh">DHH</a> said in his <a href="http://signalvnoise.com/posts/3372-put-chubby-models-on-a-diet-with-concerns">POST</a>
+<em>&ldquo;Concerns are also a helpful way of extracting a slice of model that doesn’t seem part of its essence &hellip; &rdquo;</em>, based on
+this, we will create a concern module called <code>Seachable</code> that allow our models to have the ability of be searchable
+ using <a href="https://github.com/mislav/will_paginate">will_paginate</a>, always seeking be more DRY as we can.</p>
+
+<div><script src='https://gist.github.com/9478893.js?file=searchable.rb'></script>
+<noscript><pre><code>module Searchable
+    extend ActiveSupport::Concern
+
+    module ClassMethods
+    
+      # Search method basen in will_paginate gem
+      # params
+      #   - string pattern: &quot;Jhon&quot;
+      #   - integer page: 10
+      #   - array of attribute names as string: [&#39;name&#39;, &#39;email&#39;, &#39;nickname&#39;]
+      # Return
+      # Wil paginate records
+        def search(pattern, page, attr)
+            paginate :per_page      =&gt; 20, :page =&gt; page,
+                     :conditions    =&gt; string_builder(attr, pattern)
+        end
+
+        private
+        
+        # Build string search and params for conditions based in attributes
+        # params 
+        #   - array of attribute names as strings: [&#39;name&#39;, &#39;email&#39;, &#39;nickname&#39;]
+        #   - string pattern: &quot;Jhon&quot;
+        # Return
+        #    [&quot;UPPER(cast(name)), UPPER(cast(email)), UPPER(cast(nickname)) LIKE ? or ? or ?&quot;, &quot;%Jhon%&quot;, &quot;%Jhon%&quot;, &quot;%Jhon%&quot;]
+        def string_builder(attr, pattern)
+            finder ||= &quot;&quot;
+            arr = []
+            arr &lt;&lt; attr.map{|att| &quot; UPPER(cast(#{att} as text)) LIKE ?&quot;}.join(&#39; or&#39;)
+            arr &lt;&lt; attr.map{|att| &#39;%&#39;+pattern.upcase+&#39;%&#39;}
+            arr.flatten
+        end
+    end
+end</code></pre></noscript></div>
+
+
+<h3>2. Include Searchable Method</h3>
+
+<p>We have to include the <code>Searchable</code> concern in each model that we like to add the ability of be searchable.</p>
+
+<div><script src='https://gist.github.com/9478893.js?file=client.rb'></script>
+<noscript><pre><code>class Client &lt; ActiveRecord::Base
+  # Include Searchable concern
+  include Searchable
+end  
+  </code></pre></noscript></div>
+
+
+
+
+<div><script src='https://gist.github.com/9478893.js?file=clients_controller.rb'></script>
+<noscript><pre><code>@clients = Client.search(params[:finder], params[:page], [&#39;name&#39;, &quot;nickname&quot;, &quot;email&quot;, &quot;date&quot;])</code></pre></noscript></div>
+
+
+
+
+<div><script src='https://gist.github.com/9478893.js?file=application_helper.rb'></script>
+<noscript><pre><code># app/helpers/application_helper.rb
+module ApplicationHelper
+    def search_form(path, placeholder)
+        form_tag path, class: &quot;well&quot;, :method =&gt; &#39;get&#39; do
+            content_tag :div, class: &#39;row&#39; do
+                content_tag :div, class: &#39;col-md-6&#39; do
+                    content_tag :div, class: &#39;input-group&#39; do
+                        text_field_tag(:finder, params[:finder], :class =&gt; &quot;form-control input-sm&quot;, :placeholder =&gt; placeholder)+
+                        content_tag(:span, class: &#39;input-group-btn&#39;) do
+                            submit_tag(&quot;Buscar&quot;, :class =&gt; &#39;btn btn-success btn-sm spin&#39;)
+                        end
+                    end
+                end.concat(
+                content_tag(:div, class: &#39;col-md-6 pull-right&#39;) do
+                    content_tag :div, class: &#39;btn-group&#39; do
+                        link_to(&quot;Excel&quot;, url_for(params.merge(:format =&gt; &quot;xls&quot;, :only_path =&gt; false)), :class =&gt; &quot;btn btn-primary btn-sm&quot; )+
+                        link_to(&quot;CSV&quot;, url_for(params.merge(:format =&gt; &quot;csv&quot;, :only_path =&gt; false)), :class =&gt; &quot;btn btn-primary btn-sm&quot; )+
+                        link_to(&quot;PDF&quot;, url_for(params.merge(:format =&gt; &quot;pdf&quot;, :only_path =&gt; false)), :class =&gt; &quot;btn btn-primary btn-sm&quot; )
+                    end
+                end )
+            end
+        end
+    end
+end</code></pre></noscript></div>
+
+
+
+
+<div><script src='https://gist.github.com/9478893.js?file=index.html.erb'></script>
+<noscript><pre><code>&lt;%= search_form(cients_path, &quot;Search by Name or Nickname&quot; ) %&gt;</code></pre></noscript></div>
+
+
+<p><img src="/github/images/search1.png" title="Ninja Attack!" ></p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2014 - Ruben Espinosa -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			
+
+<script type="text/javascript">
+      var disqus_shortname = 'respinos';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rderoldan1.github.io//github/blog/2014/03/10/search-form-in-rails-4-plus-postgres-and-concerns/';
+        var disqus_url = 'http://rderoldan1.github.io//github/blog/2014/03/10/search-form-in-rails-4-plus-postgres-and-concerns/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

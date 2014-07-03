@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby_on_rails | My Blog]]></title>
+  <link href="http://rderoldan1.github.io//github/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
+  <link href="http://rderoldan1.github.io//github/"/>
+  <updated>2014-07-03T14:44:48-05:00</updated>
+  <id>http://rderoldan1.github.io//github/</id>
+  <author>
+    <name><![CDATA[Ruben Espinosa]]></name>
+    <email><![CDATA[rderoldan1@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Search form in Rails 4 + Postgres and Concerns]]></title>
+    <link href="http://rderoldan1.github.io//github/blog/2014/03/10/search-form-in-rails-4-plus-postgres-and-concerns/"/>
+    <updated>2014-03-10T22:00:55-05:00</updated>
+    <id>http://rderoldan1.github.io//github/blog/2014/03/10/search-form-in-rails-4-plus-postgres-and-concerns</id>
+    <content type="html"><![CDATA[<h3>Assumptions</h3>
+
+<p>This post assume that you are using 2 main gems in your Rails Application</p>
+
+<p>```ruby</p>
+
+<h1>Gemfile</h1>
+
+<p>gem &lsquo;bootstrap-sass&rsquo; # bootstrap 3
+gem &lsquo;will_paginate&rsquo;
+```</p>
+
+<p>One of the most interesting features included in Rails 4 is Model and Controller concerns. As
+<a href="https://twitter.com/dhh">DHH</a> said in his <a href="http://signalvnoise.com/posts/3372-put-chubby-models-on-a-diet-with-concerns">POST</a>
+<em>&ldquo;Concerns are also a helpful way of extracting a slice of model that doesn’t seem part of its essence &hellip; &rdquo;</em>, based on
+this, we will create a concern module called <code>Seachable</code> that allow our models to have the ability of be searchable
+ using <a href="https://github.com/mislav/will_paginate">will_paginate</a>, always seeking be more DRY as we can.</p>
+
+<p><div><script src='https://gist.github.com/9478893.js?file=searchable.rb'></script>
+<noscript><pre><code>module Searchable
+	extend ActiveSupport::Concern
+
+	module ClassMethods
+	
+	  # Search method basen in will_paginate gem
+	  # params
+	  #   - string pattern: &quot;Jhon&quot;
+	  #   - integer page: 10
+	  #   - array of attribute names as string: [&#39;name&#39;, &#39;email&#39;, &#39;nickname&#39;]
+	  # Return
+	  # Wil paginate records
+		def search(pattern, page, attr)
+			paginate :per_page 		=&gt; 20, :page =&gt; page,
+			         :conditions 	=&gt; string_builder(attr, pattern)
+		end
+
+		private
+		
+		# Build string search and params for conditions based in attributes
+		# params 
+		#   - array of attribute names as strings: [&#39;name&#39;, &#39;email&#39;, &#39;nickname&#39;]
+		#   - string pattern: &quot;Jhon&quot;
+		# Return
+		#    [&quot;UPPER(cast(name)), UPPER(cast(email)), UPPER(cast(nickname)) LIKE ? or ? or ?&quot;, &quot;%Jhon%&quot;, &quot;%Jhon%&quot;, &quot;%Jhon%&quot;]
+		def string_builder(attr, pattern)
+			finder ||= &quot;&quot;
+			arr = []
+			arr &lt;&lt; attr.map{|att| &quot; UPPER(cast(#{att} as text)) LIKE ?&quot;}.join(&#39; or&#39;)
+			arr &lt;&lt; attr.map{|att| &#39;%&#39;+pattern.upcase+&#39;%&#39;}
+			arr.flatten
+		end
+	end
+end</code></pre></noscript></div>
+</p>
+
+<h3>2. Include Searchable Method</h3>
+
+<p>We have to include the <code>Searchable</code> concern in each model that we like to add the ability of be searchable.
+<div><script src='https://gist.github.com/9478893.js?file=client.rb'></script>
+<noscript><pre><code>class Client &lt; ActiveRecord::Base
+  # Include Searchable concern
+  include Searchable
+end  
+  </code></pre></noscript></div>
+
+<div><script src='https://gist.github.com/9478893.js?file=clients_controller.rb'></script>
+<noscript><pre><code>@clients = Client.search(params[:finder], params[:page], [&#39;name&#39;, &quot;nickname&quot;, &quot;email&quot;, &quot;date&quot;])</code></pre></noscript></div>
+
+<div><script src='https://gist.github.com/9478893.js?file=application_helper.rb'></script>
+<noscript><pre><code># app/helpers/application_helper.rb
+module ApplicationHelper
+	def search_form(path, placeholder)
+		form_tag path, class: &quot;well&quot;, :method =&gt; &#39;get&#39; do
+			content_tag :div, class: &#39;row&#39; do
+				content_tag :div, class: &#39;col-md-6&#39; do
+					content_tag :div, class: &#39;input-group&#39; do
+						text_field_tag(:finder, params[:finder], :class =&gt; &quot;form-control input-sm&quot;, :placeholder =&gt; placeholder)+
+						content_tag(:span, class: &#39;input-group-btn&#39;) do
+							submit_tag(&quot;Buscar&quot;, :class =&gt; &#39;btn btn-success btn-sm spin&#39;)
+						end
+					end
+				end.concat(
+				content_tag(:div, class: &#39;col-md-6 pull-right&#39;) do
+					content_tag :div, class: &#39;btn-group&#39; do
+						link_to(&quot;Excel&quot;, url_for(params.merge(:format =&gt; &quot;xls&quot;, :only_path =&gt; false)), :class =&gt; &quot;btn btn-primary btn-sm&quot; )+
+						link_to(&quot;CSV&quot;, url_for(params.merge(:format =&gt; &quot;csv&quot;, :only_path =&gt; false)), :class =&gt; &quot;btn btn-primary btn-sm&quot; )+
+						link_to(&quot;PDF&quot;, url_for(params.merge(:format =&gt; &quot;pdf&quot;, :only_path =&gt; false)), :class =&gt; &quot;btn btn-primary btn-sm&quot; )
+					end
+				end )
+			end
+		end
+	end
+end</code></pre></noscript></div>
+
+<div><script src='https://gist.github.com/9478893.js?file=index.html.erb'></script>
+<noscript><pre><code>&lt;%= search_form(cients_path, &quot;Search by Name or Nickname&quot; ) %&gt;</code></pre></noscript></div>
+
+<img src="/images/search1.png" title="Ninja Attack!" ></p>
+]]></content>
+  </entry>
+  
+</feed>

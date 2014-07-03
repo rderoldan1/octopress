@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+
+Sitemap: http://rderoldan1.github.io//github/sitemap.xml 
